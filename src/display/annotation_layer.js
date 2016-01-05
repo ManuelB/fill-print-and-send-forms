@@ -401,8 +401,12 @@ var WidgetAnnotationElement = (function WidgetAnnotationElementClosure() {
         function WidgetAnnotationElement_setTextStyle(element, font) {
       // TODO: This duplicates some of the logic in CanvasGraphics.setFont().
       var style = element.style;
-      style.fontSize = this.data.fontSize + 'px';
-      style.direction = (this.data.fontDirection < 0 ? 'rtl': 'ltr');
+      if ('fontSize' in this.data) {
+        style.fontSize = this.data.fontSize + 'px';
+      }
+      if ('fontDirection' in this.data) {
+        style.direction = (this.data.fontDirection < 0 ? 'rtl': 'ltr');
+      }
 
       if (!font) {
         return;
