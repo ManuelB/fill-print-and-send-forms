@@ -621,6 +621,7 @@ var TextWidgetAnnotation = (function TextWidgetAnnotationClosure() {
 
     this.data.textAlignment = Util.getInheritableProperty(params.dict, 'Q');
     this.data.hasHtml = !this.data.hasAppearance && !!this.data.fieldValue;
+    this.data.maxLen = Util.getInheritableProperty(params.dict, 'MaxLen');
   }
 
   Util.inherit(TextWidgetAnnotation, WidgetAnnotation, {
