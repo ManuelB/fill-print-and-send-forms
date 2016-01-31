@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:c="http://java.sun.com/jsp/jstl/core"
+	xmlns:o="http://omnifaces.org/ui"
+	xmlns:of="http://omnifaces.org/functions" template="common.xhtml">
+	<ui:define name="html-head">
+		<c:if test="${empty index.formFileName}">
+			<script type="text/javascript">
+			function showFooterForm() {
+                $("#step-one").toggle();
+				$("#step-two").toggle();
+				$("footer").toggleClass("expand");
+			}
+			$(document).ready(function () {
+			    var file;
+                $('#receiver-for-letter').trigger('autoresize');
+
+                $("#form-submit").click(function () {
+                    $(this).prop("disabled");
+                    $(this).html("0%");
+                    var me = this;
+                	var data = new FormData();
+                	data.append('file', file);
+                	data.append('receiver-for-letter', $('#receiver-for-letter').val());
+                	data.append('pdf-file-name', $("#pdf-file-name").val());
+
+                	var signature = $("#signature-div");
+
+                    var signatureBoundingClientRect = signature[0].getBoundingClientRect();
+                    var page = document.elementFromPoint(signatureBoundingClientRect.top-1,
+                            signatureBoundingClientRect.left-1);
+                    // got up the DOM tree until you find the page
+                    while(page.className != "pdfpage" &amp;&amp; page.tagName != "body") {
+                    	page = page.parentNode;
+                    }
+
+                    var  element = signature[0],
+
+                    y   = element.offsetTop - page.offsetTop,
+                    x   = element.offsetLeft - page.offsetLeft;
+
+                    var viewport = PDFJS.pageViewports[page.title];
+
+                    var pdfPoint = viewport.convertToPdfPoint(x,y+signature.height());
+
+                    // llx   lower left x
+                    // lly   lower left y
+                    // urx   upper right x
+                    // ury   upper right y
+                    
+                    data.append('signature-llx', pdfPoint[0]);
+                    data.append('signature-lly', pdfPoint[1]);
+
+                    pdfPoint = viewport.convertToPdfPoint(x+signature.width(),y);
+
+                    data.append('signature-urx', pdfPoint[0]);
+                    data.append('signature-ury', pdfPoint[1]);
+
+                    data.append('page', page.title);
+                    
+                	jQuery.ajax({
+                		xhr: function() {
+                	        var xhr = new window.XMLHttpRequest();
+                	        xhr.upload.addEventListener("progress", function(evt) {
+                	            if (evt.lengthComputable) {
+                	                var percentComplete = evt.loaded / evt.total;
+                	                //Do something with upload progress here
+                	                $("#form-submit").html(percentComplete+"%");
+                	            }
+                	       }, false);
+                	        xhr.upload.addEventListener("load", function(evt) {
+                                    //Do something with upload progress here
+                                    $("#form-submit").html("100%");
+                           }, false);
+
+                	       xhr.addEventListener("progress", function(evt) {
+                	           if (evt.lengthComputable) {
+                	               var percentComplete = evt.loaded / evt.total;
+                	               //Do something with download progress
+                	           }
+                	       }, false);
+
+                	       return xhr;
+                	    },
+                	    url: 'rest/upload',
+                	    data: data,
+                	    cache: false,
+                	    contentType: false,
+                	    processData: false,
+                	    type: 'POST',
+                	    success: function(data){
+                	        window.location.href = window.location.href+(window.location.href.match(/\/$/) ? "" : "/")+data;
+                	    },
+                	    error: function (data) {
+                	    	alert("Upload hat nicht geklappt. "+data.statusText);
+                            //Do something with upload progress here
+                            $("#form-submit").html("Nochmal versuchen");
+                        }
+                	});
+                    return false;
+                });
+                
+				require.config({paths: {'pdfjs': 'src'}});
+				var $form = $("#upload-form");
+				$form.on('drag dragstart dragend dragover dragenter dragleave drop', function(e) {
+				  e.preventDefault();
+				  e.stopPropagation();
+				})
+				.on('dragover dragenter', function() {
+				  $form.addClass('dragover');
+				})
+				.on('dragleave dragend drop', function() {
+				  $form.removeClass('dragover');
+				})
+				.on('drop', function(e) {
+				  var droppedFiles = e.originalEvent.dataTransfer.files;
+				  file = droppedFiles[0];
+				  if (file.type != "application/pdf") {
+					Materialize.toast('Datei war leider kein PDF. Versuchs nochmal.', 4000);
+				  } else if(file.size > (10*1024*1024)) {
+					Materialize.toast('Datei war größer als 10MB. Versuchs nochmal.', 4000);
+				  } else {
+					  $("#viewer").show();
+					  $("#pdf-file-name").val(file.name);
+					  $('#signature-div').css({
+						  "display" : "block",
+						  "border": "1px dashed #000",
+						  "width" : "300px",
+						  "height" : "40px",
+						  "position" : "absolute",
+						  "cursor" : "move",
+						  "zIndex" : "1",
+						  "backgroundColor" : "rgba(195, 80, 80, 0.2)"
+						  });
+					  $('#signature-div')
+					    .draggable()
+					    .resizable({
+					        start: function(e, ui) {
+					        },
+					        resize: function(e, ui) {
+					        },
+					        stop: function(e, ui) {
+					        }
+					  });
+					require(['pdfjs/display/api'], function (api) {
+						  // In production, change this to point to the built `pdf.worker.js` file.
+						  PDFJS.workerSrc = 'src/worker_loader.js';
+	
+						  //Specify the PDF with AcroForm here
+						  var pdfWithFormsPath = "documents/"+$('#form-file-name').val();
+						  var reader = new FileReader();
+						  reader.onload = function(e) {
+							  // get file content
+							  var arrayBuffer = e.target.result;
+							  // Fetch the PDF document from the URL using promises.
+							  api.getDocument(arrayBuffer).then(function getPdfForm(pdf) {
+								// Rendering all pages starting from first
+								var viewer = document.getElementById('viewer');
+								var pageNumber = 1;
+								renderPage(viewer, pdf, pageNumber++, function pageRenderingComplete() {
+								  if (pageNumber > pdf.numPages) {
+									return; // All pages rendered
+								  }
+								  // Continue rendering of the next page
+								  renderPage(viewer, pdf, pageNumber++, pageRenderingComplete);
+								});
+							  });
+							  $("#upload-drop-zone-wrapper").hide();
+							  showFooterForm();
+						  }
+						  reader.readAsArrayBuffer(file);
+						});
+					  }
+				});
+				$("#send-letter-form").submit(function () {
+					try {
+						ga('ecommerce:addTransaction', {
+							  'id': new Date().toString(),                     // Transaction ID. Required.
+							  'affiliation': 'Antrag Incentergy',   // Affiliation or store name.
+							  'revenue': '2.51',               // Grand Total.
+							  'shipping': '0',                  // Shipping.
+							  'tax': '0.48'                     // Tax.
+							});
+						ga('ecommerce:send');
+						
+					} catch(e) { console.log(e); }
+					});
+			});
+			</script>
+		</c:if>
+		<c:if test="${not empty index.formFileName}">
+			<script type="text/javascript">
+			  $(document).ready(function () {
+				$('#receiver-for-letter').trigger('autoresize');
+				var buttonLabel = "Doch nicht versenden!";
+				var loaded = false;
+				$('#send-now-letter').click(function () {
+				  $('footer').toggleClass('expand');
+				  $('#send-now-letter').toggleClass('btn');
+				  $('#send-now-letter').toggleClass('btn-flat');
+				  var oldLabel = $('#send-now-letter').html();
+				  $('#send-now-letter').html(buttonLabel);
+				  buttonLabel = oldLabel;
+				  if(!loaded) {
+					  loaded = true;
+					  var jqxhr = $.get( "rest/clientPaymentToken", function(clientToken) {
+						  braintree.setup(clientToken, "dropin", {
+							  container: "payment"
+						  });
+					  });
+					  }
+				  
+				});
+			  });
+			</script>
+		</c:if>
+	</ui:define>
+	<ui:define name="content">
+		<c:if test="${empty index.formFileName}">
+		    <div id="signature-div" style="display: none"><span>Bei Unterschrift platzieren</span></div>
+			<form action="upload" enctype="multipart/form-data" id="upload-form">
+				<input type="hidden" name="pdf-file-name" id="pdf-file-name"
+					value="" />
+				<div class="valign-wrapper" id="upload-drop-zone-wrapper">
+					<h1 class="valign center-align" id="upload-drop-zone">
+						<i class="fa fa-file-pdf-o"></i><br />Hier PDF<br /> droppen<br />
+					</h1>
+				</div>
+				<div id="viewer" style="display: none"></div>
+				<footer class="card-panel upload center-align">
+					<p class="flow-text" id="step-one">Bitte ziehen Sie ein PDF
+						Datei mit Formular in den oberen Bereich um diese hochzuladen und
+						danach an einen beliebigen Empfänger per Post schicken zu können.</p>
+					<div id="step-two" style="display: none">
+						<fieldset class="col s8 push-s2">
+							<div class="row">
+								<div class="input-field col s12">
+									<textarea name="receiver-for-letter" id="receiver-for-letter"
+										class="materialize-textarea"></textarea>
+									<label for="receiver-for-letter">Standardempfänger</label>
+								</div>
+							</div>
+							<button class="btn waves-effect waves-light" type="submit"
+								name="action" id="form-submit">
+								Dokument hochladen und speichern <i class="material-icons right">send</i>
+							</button>
+						</fieldset>
+					</div>
+				</footer>
+			</form>
+		</c:if>
+		<c:if test="${not empty index.formFileName}">
+			<form method="post" action="rest/send" id="send-letter-form">
+				<input type="hidden" name="form-file-name" id="form-file-name"
+					value="#{index.formFileName}.pdf" />
+				<div id="viewer"></div>
+				<div id="impressum">
+					<a href="http://www.incentergy.de/impressum/">Impressum und
+						Datenschutzhinweise</a> | <a href="AGB.pdf" target="_blank">AGB</a>
+				</div>
+				<footer class="card">
+					<a class="waves-effect waves-light btn-large" id="send-now-letter">
+						<i class="material-icons left">mail_outline</i>Jetzt für 2,99 €
+						als Brief versenden
+					</a>
+					<div class="row">
+						<fieldset class="col s8 push-s2">
+							<div class="row">
+								<div class="input-field col s12">
+									<textarea name="receiver-for-letter" id="receiver-for-letter"
+										class="materialize-textarea"></textarea>
+									<label for="receiver-for-letter">Empfänger</label>
+								</div>
+							</div>
+							<div id="payment"></div>
+							<div class="row">
+								<div class="input-field col s12">
+									<input type="checkbox" id="widerrufsverzicht"
+										onclick="$('#form-submit').prop('disabled', !this.checked)" />
+									<label for="widerrufsverzicht">Ich verzichte auf mein
+										14 tägiges Widerrufsrecht, akzeptiere die <a href="AGB.pdf"
+										target="_blank">AGB</a> und möchte, dass das Formular
+										schnellstmöglich per Post an den Empfänger zugestell wird.
+									</label>
+								</div>
+							</div>
+							<button class="btn waves-effect waves-light" type="submit"
+								name="action" id="form-submit" disabled="disabled">
+								Jetzt kostenpflichtig für 2,99 € versenden <i
+									class="material-icons right">send</i>
+							</button>
+						</fieldset>
+					</div>
+				</footer>
+			</form>
+		</c:if>
+	</ui:define>
+</ui:composition>
