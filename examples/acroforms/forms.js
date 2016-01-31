@@ -6,7 +6,7 @@
 'use strict';
 
 // Specify the PDF with AcroForm here
-var pdfWithFormsPath = '../../test/pdfs/f1040.pdf';
+var pdfWithFormsPath = '../../test/pdfs/05_AAG_AU.pdf';
 
 var formFields = {};
 
