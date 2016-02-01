@@ -1,6 +1,9 @@
 package de.incentergy.letter.sender.services;
 
+import java.awt.Frame;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Panel;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -18,14 +21,11 @@ import org.apache.batik.bridge.GVTBuilder;
 import org.apache.batik.bridge.UserAgent;
 import org.apache.batik.bridge.UserAgentAdapter;
 import org.apache.batik.gvt.GraphicsNode;
-import org.apache.batik.transcoder.TranscoderInput;
-import org.apache.batik.transcoder.print.PrintTranscoder;
 import org.apache.batik.util.XMLResourceDescriptor;
 import org.w3c.dom.svg.SVGDocument;
 
 import com.itextpdf.awt.PdfGraphics2D;
 import com.itextpdf.text.DocumentException;
-import com.itextpdf.text.ImgTemplate;
 import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.pdf.AcroFields;
 import com.itextpdf.text.pdf.AcroFields.FieldPosition;
@@ -80,12 +80,23 @@ public class PdfAcroFormFiller {
 				for (FieldPosition fp : form.getFieldPositions(
 						"signature-drawing.signature-drawing")) {
 					PdfContentByte cb = stamper.getOverContent(fp.page);
+					cb.saveState();
 
 					PdfTemplate signatureTemplate = cb.createTemplate(
 							fp.position.getWidth(), fp.position.getHeight());
 
-					Graphics2D g2d = new PdfGraphics2D(signatureTemplate,
+					final Graphics2D g2d = new PdfGraphics2D(signatureTemplate,
 							fp.position.getWidth(), fp.position.getHeight());
+					
+					/*Frame f = new Frame();
+					Panel panel = new Panel() {
+						public void paint(Graphics g) {
+							Graphics2D g2 = (Graphics2D) g;
+						}
+					};
+					f.add(panel);
+					f.setVisible(true);*/
+					
 					SVGDocument signature = factory.createSVGDocument(
 							"signature.svg",
 							new ByteArrayInputStream(e.getValue().getBytes()));
@@ -95,6 +106,7 @@ public class PdfAcroFormFiller {
 					g2d.dispose();
 					cb.addTemplate(signatureTemplate, fp.position.getLeft(),
 							fp.position.getTop());
+					cb.restoreState();
 				}
 			} else {
 				form.setField(e.getKey(), e.getValue());
