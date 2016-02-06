@@ -76,6 +76,9 @@ body.letter-body {
 	background: #ccc;
 	position: absolute;
 }
+.inputHint.signature {
+	opacity: 1;
+}
 
 footer.card-panel.upload {
 	height: 10em;
@@ -95,11 +98,12 @@ footer.card-panel, footer.card {
 }
 
 footer.card-panel.expand {
-	height: 16em;
+	height: 20em;
 }
 
 footer.card.expand {
-	height: 45em;
+	height: 55em;
+    overflow: auto;
 }
 
 footer .row fieldset.col[class*="push-"] {

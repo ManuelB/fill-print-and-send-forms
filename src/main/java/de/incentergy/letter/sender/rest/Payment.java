@@ -15,10 +15,10 @@ public class Payment {
 			"ybxr9wjrtmdq4m3b", "nm5fd5nyxc5xhgyf",
 			"a3d32191c9bb7311e85ad40bb95ff732");
 	static BraintreeGateway production = new BraintreeGateway(
-			Environment.PRODUCTION, "khb5qy3qc79swh87", "nygbxczdxkb2dn26",
-			"08ef81939ac8245bb14914c13c632b8e");
+			Environment.PRODUCTION, "khb5qy3qc79swh87", "3hhng5qzx5b4wcpw",
+			"93de1a594e7ddd1a78119e7376acec9b");
 
-	public static BraintreeGateway gateway = sandbox;
+	public static BraintreeGateway gateway = production;
 
 	@GET
 	public String clientPaymentToken() {

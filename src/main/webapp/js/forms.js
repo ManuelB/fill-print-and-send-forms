@@ -77,7 +77,12 @@ function setupForm(div, content, viewport) {
           
           var input;
           if(item.fullName === "signature-drawing.signature-drawing") {
-        	  $(inputDiv).jSignature();
+        	  $(inputDiv).addClass("signature");
+        	  $(inputDiv).jSignature({
+        		  'UndoButton' : true,
+        		  'width' : $(inputDiv).width(),
+        		  'height' : $(inputDiv).height()
+        	  });
         	  
         	  input = document.createElement("input");
         	  input.type = "hidden";
@@ -85,7 +90,9 @@ function setupForm(div, content, viewport) {
         	  
         	  $(inputDiv).bind('change', function(e){
         		  /* 'e.target' will refer to div with "#signature" */
-        		  var datapair = $(e.target).jSignature("getData","svg");
+        		  // We had bigger problems with batik
+        		  // var datapair = $(e.target).jSignature("getData","svg");
+        		  var datapair = $(e.target).jSignature("getData","image");
         		  input.value = datapair[1];
         	  });
         	  div.appendChild(input);

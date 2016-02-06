@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.annotation.PostConstruct;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.servlet.ServletContext;
@@ -18,9 +17,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
-import org.apache.commons.configuration.reloading.FileChangedReloadingStrategy;
 
 import com.itextpdf.text.DocumentException;
 
@@ -35,18 +32,8 @@ public class Upload {
 	@Inject
 	PdfAcroFormFiller pdfAcroFormFiller;
 
+	@Inject
 	PropertiesConfiguration config;
-
-	@PostConstruct
-	public void init() {
-		try {
-			config = new PropertiesConfiguration(Thread.currentThread()
-					.getContextClassLoader().getResource("config.properties"));
-			config.setReloadingStrategy(new FileChangedReloadingStrategy());
-		} catch (ConfigurationException e) {
-			log.log(Level.WARNING, "Could not load decide-it.properties", e);
-		}
-	}
 
 	/**
 	 * https://docs.jboss.org/resteasy/docs/1.1.GA/userguide/html/Multipart.html
