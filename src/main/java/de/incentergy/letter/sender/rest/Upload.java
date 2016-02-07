@@ -54,15 +54,23 @@ public class Upload {
 		try {
 			pdfWithReceiver = pdfAcroFormFiller.addReceiverToFormAsAuthor(
 					formData.get("file"), formData.get("receiver-for-letter"));
-			
+
 			try {
-				pdfWithReceiver = pdfAcroFormFiller.addSignatureField(pdfWithReceiver,
-					Integer.parseInt((String) formData.get("page")),
-					Float.parseFloat((String) formData.get("signature-llx")),
-					Float.parseFloat((String) formData.get("signature-lly")),
-					Float.parseFloat((String) formData.get("signature-urx")),
-					Float.parseFloat((String) formData.get("signature-ury")));
-			} catch(Exception ex) {
+				if (formData.get("page") != null
+						&& !formData.get("page").equals("")) {
+					pdfWithReceiver = pdfAcroFormFiller.addSignatureField(
+							pdfWithReceiver,
+							Integer.parseInt((String) formData.get("page")),
+							Float.parseFloat(
+									(String) formData.get("signature-llx")),
+							Float.parseFloat(
+									(String) formData.get("signature-lly")),
+							Float.parseFloat(
+									(String) formData.get("signature-urx")),
+							Float.parseFloat(
+									(String) formData.get("signature-ury")));
+				}
+			} catch (Exception ex) {
 				log.log(Level.WARNING, "Cannot add Signature coordinate", ex);
 			}
 
@@ -72,10 +80,11 @@ public class Upload {
 			File file2 = new File(realPath);
 			int i = 2;
 			while (file2.exists()) {
-				if(i == 2) {
+				if (i == 2) {
 					pdfFileName = pdfFileName.replace(".pdf", "-" + i + ".pdf");
 				} else {
-					pdfFileName = pdfFileName.replace("-" + (i-1) + ".pdf", "-" + i + ".pdf");
+					pdfFileName = pdfFileName.replace("-" + (i - 1) + ".pdf",
+							"-" + i + ".pdf");
 				}
 				realPath = config.getString("uploadPath",
 						context.getRealPath("/documents/")) + "/" + pdfFileName;

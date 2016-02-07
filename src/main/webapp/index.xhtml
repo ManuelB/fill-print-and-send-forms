@@ -32,34 +32,35 @@
                     var signatureBoundingClientRect = signature[0].getBoundingClientRect();
                     var page = document.elementFromPoint(signatureBoundingClientRect.top-1,
                             signatureBoundingClientRect.left-1);
-                    // got up the DOM tree until you find the page
-                    while(page.className != "pdfpage" &amp;&amp; page.tagName != "body") {
-                    	page = page.parentNode;
-                    }
-
-                    var  element = signature[0],
-
-                    y   = element.offsetTop - page.offsetTop,
-                    x   = element.offsetLeft - page.offsetLeft;
-
-                    var viewport = PDFJS.pageViewports[page.title];
-
-                    var pdfPoint = viewport.convertToPdfPoint(x,y+signature.height());
-
-                    // llx   lower left x
-                    // lly   lower left y
-                    // urx   upper right x
-                    // ury   upper right y
-                    
-                    data.append('signature-llx', pdfPoint[0]);
-                    data.append('signature-lly', pdfPoint[1]);
-
-                    pdfPoint = viewport.convertToPdfPoint(x+signature.width(),y);
-
-                    data.append('signature-urx', pdfPoint[0]);
-                    data.append('signature-ury', pdfPoint[1]);
-
-                    data.append('page', page.title);
+                    if(page) {
+	                    // got up the DOM tree until you find the page
+	                    while(page.className != "pdfpage" &amp;&amp; page.tagName != "body") {
+	                    	page = page.parentNode;
+	                    }
+	
+	                    var  element = signature[0],
+	
+	                    y   = element.offsetTop - page.offsetTop,
+	                    x   = element.offsetLeft - page.offsetLeft;
+	
+	                    var viewport = PDFJS.pageViewports[page.title];
+	
+	                    var pdfPoint = viewport.convertToPdfPoint(x,y+signature.height());
+	                    // llx   lower left x
+	                    // lly   lower left y
+	                    // urx   upper right x
+	                    // ury   upper right y
+	                    
+	                    data.append('signature-llx', pdfPoint[0]);
+	                    data.append('signature-lly', pdfPoint[1]);
+	
+	                    pdfPoint = viewport.convertToPdfPoint(x+signature.width(),y);
+	
+	                    data.append('signature-urx', pdfPoint[0]);
+	                    data.append('signature-ury', pdfPoint[1]);
+	
+	                    data.append('page', page.title);
+	                }
                     
                 	jQuery.ajax({
                 		xhr: function() {
